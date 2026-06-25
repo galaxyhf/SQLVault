@@ -1,0 +1,52 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production build
+dist/
+build/
+
+# Local env files (ignore real secrets, keep example files)
+.env.local
+.env.*.local
+
+# dotenv files (ignore real secrets; keep .env.example if present)
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# macOS
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/
+
+# Misc caches
+.cache/
+.turbo/
+.parcel-cache/
+
+# Test coverage
+coverage/
+
+# Deployment / serverless
+.serverless/
+.vercel/
+
+# Swap and temp files
+*.swp
+*~
+
+# Optional: pnpm lockfile (uncomment if using pnpm)
+# pnpm-lock.yaml
+
+# Optional: local secrets
+# secrets.json

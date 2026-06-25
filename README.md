@@ -1,0 +1,313 @@
+# SQLVault
+
+SQLVault e uma aplicacao web para guardar, pesquisar, copiar e favoritar comandos SQL de PostgreSQL e SQL Server.
+
+O projeto foi construido com Next.js, React, TypeScript, Drizzle ORM e Neon PostgreSQL.
+
+## Funcionalidades
+
+- Dashboard com total de comandos, comandos PostgreSQL e comandos SQL Server.
+- Biblioteca com busca por titulo, filtro por tipo de banco e paginacao.
+- Cadastro, edicao e exclusao de comandos SQL.
+- Visualizacao de SQL com numeracao de linhas e destaque simples de sintaxe.
+- Botao para copiar SQL para a area de transferencia.
+- Favoritos salvos no `localStorage` do navegador.
+- Tema claro/escuro via `next-themes`.
+
+## Tecnologias
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Drizzle ORM
+- Drizzle Kit
+- Neon Serverless PostgreSQL
+- Zod
+- Lucide React
+- Sonner
+
+## Requisitos
+
+- Node.js 20 ou superior.
+- npm.
+- Um banco PostgreSQL compativel com Neon para persistir dados.
+
+Sem banco configurado, o app abre com listas vazias, mas criar, editar e excluir comandos nao funciona.
+
+## Instalar o projeto
+
+Clone ou abra a pasta do projeto e instale as dependencias:
+
+```bash
+npm install
+```
+
+Crie o arquivo de variaveis de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+Edite `.env` e configure a URL do banco:
+
+```env
+DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+```
+
+Para usar Neon:
+
+1. Crie um projeto no Neon.
+2. Copie a connection string do banco.
+3. Cole a connection string em `DATABASE_URL`.
+4. Mantenha `sslmode=require` na URL.
+
+## Configurar o banco
+
+O schema principal fica em `src/db/schema.ts`. A migration inicial gerada pelo Drizzle fica em `src/db/migrations/0000_needy_zzzax.sql`.
+
+Depois de configurar `DATABASE_URL`, execute as migrations:
+
+```bash
+npm run db:migrate
+```
+
+O script `db:migrate` executa `src/db/migrate.ts`, que cria o schema de forma idempotente no Neon/PostgreSQL. Isso evita falhas silenciosas do `drizzle-kit migrate` com o driver WebSocket do Neon em alguns ambientes.
+
+## Rodar em desenvolvimento
+
+Inicie o servidor local:
+
+```bash
+npm run dev
+```
+
+Abra:
+
+```text
+http://localhost:3000
+```
+
+A rota `/` redireciona automaticamente para `/dashboard`.
+
+## Usar a aplicacao
+
+### Dashboard
+
+Acesse `/dashboard` para ver:
+
+- total de comandos cadastrados;
+- total de comandos PostgreSQL;
+- total de comandos SQL Server;
+- ultimos comandos cadastrados.
+
+### Biblioteca
+
+Acesse `/commands` para navegar pela biblioteca.
+
+Na biblioteca voce pode:
+
+- pesquisar por titulo;
+- filtrar por `Todos`, `PostgreSQL` ou `SQL Server`;
+- abrir um comando;
+- copiar o SQL;
+- favoritar um comando;
+- editar um comando;
+- criar um novo comando.
+
+### Criar comando
+
+Acesse `/commands/new`, preencha:
+
+- `Titulo`: minimo de 2 e maximo de 120 caracteres;
+- `Banco`: PostgreSQL ou SQL Server;
+- `SQL`: minimo de 5 caracteres.
+
+Depois clique em `Salvar`.
+
+Importante: salvar exige `DATABASE_URL`. Sem banco configurado, o formulario mostra a mensagem para configurar o banco.
+
+### Ver comando
+
+Acesse `/commands/:id` para ver o comando completo.
+
+Essa tela mostra:
+
+- titulo;
+- tipo de banco;
+- SQL com numeracao de linhas;
+- botao para copiar;
+- botao para editar.
+
+### Editar e excluir comando
+
+Acesse `/commands/:id/edit` para atualizar titulo, banco ou SQL.
+
+Nessa tela tambem ha a opcao de excluir o comando.
+
+Assim como a criacao, edicao e exclusao exigem `DATABASE_URL` configurada.
+
+### Favoritos
+
+Acesse `/favorites` para ver comandos favoritados.
+
+Os favoritos sao armazenados apenas no navegador atual, usando `localStorage` com a chave `sqlvault:favorites`. Eles nao sao salvos no banco e nao sincronizam entre navegadores ou dispositivos.
+
+## Scripts disponiveis
+
+```bash
+npm run dev
+```
+
+Roda o Next.js em desenvolvimento com Turbopack.
+
+```bash
+npm run build
+```
+
+Gera a build de producao.
+
+```bash
+npm run start
+```
+
+Inicia a build de producao. Execute `npm run build` antes.
+
+```bash
+npm run lint
+```
+
+Executa o ESLint.
+
+```bash
+npm run db:generate
+```
+
+Gera novas migrations do Drizzle a partir de alteracoes em `src/db/schema.ts`.
+
+```bash
+npm run db:migrate
+```
+
+Cria ou atualiza o schema necessario no banco configurado em `DATABASE_URL`.
+
+## Estrutura do projeto
+
+```text
+.
+├── src
+│   ├── actions
+│   │   └── commands.ts          # Server Actions de criar, editar e excluir comandos
+│   ├── app
+│   │   ├── dashboard            # Dashboard
+│   │   ├── commands             # Biblioteca, detalhe, criacao e edicao
+│   │   ├── favorites            # Favoritos locais
+│   │   ├── globals.css          # Estilos globais
+│   │   └── layout.tsx           # Layout raiz
+│   ├── components               # Componentes de UI e layout
+│   ├── db
+│   │   ├── index.ts             # Acesso ao banco
+│   │   ├── migrate.ts           # Migration idempotente para Neon/PostgreSQL
+│   │   ├── schema.ts            # Schema Drizzle
+│   │   └── migrations           # Migrations SQL
+│   ├── hooks                    # Hooks de cliente
+│   └── lib                      # Utilitarios e validadores
+├── drizzle.config.ts            # Configuracao do Drizzle Kit
+├── package.json                 # Scripts e dependencias
+├── tsconfig.json                # Configuracao TypeScript
+└── components.json              # Configuracao shadcn/ui
+```
+
+## Modelo de dados
+
+A tabela principal e `commands`.
+
+Campos:
+
+- `id`: UUID gerado automaticamente.
+- `title`: titulo do comando.
+- `database_type`: enum `postgresql` ou `sqlserver`.
+- `sql_code`: conteudo SQL.
+- `created_at`: data de criacao.
+- `updated_at`: data da ultima atualizacao.
+
+O enum `database_type` e criado pela migration inicial:
+
+```sql
+CREATE TYPE "database_type" AS ENUM ('postgresql', 'sqlserver');
+```
+
+## Fluxo recomendado de desenvolvimento
+
+1. Instale as dependencias com `npm install`.
+2. Configure `.env` com `DATABASE_URL`.
+3. Rode `npm run db:migrate`.
+4. Inicie o app com `npm run dev`.
+5. Antes de entregar alteracoes, rode:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Criar novas migrations
+
+Quando alterar `src/db/schema.ts`, gere uma migration:
+
+```bash
+npm run db:generate
+```
+
+Revise o arquivo gerado em `src/db/migrations` e atualize `src/db/migrate.ts` se a mudanca exigir novos objetos no banco. Depois aplique no banco:
+
+```bash
+npm run db:migrate
+```
+
+## Deploy
+
+Para publicar em uma plataforma como Vercel:
+
+1. Configure o projeto na plataforma.
+2. Adicione a variavel de ambiente `DATABASE_URL`.
+3. Execute as migrations no banco de producao.
+4. Use o comando de build padrao:
+
+```bash
+npm run build
+```
+
+Depois do deploy, acesse `/dashboard` para validar se a aplicacao consegue ler o banco.
+
+## Solucao de problemas
+
+### `DATABASE_URL is not configured.`
+
+Crie o arquivo `.env` e configure `DATABASE_URL`.
+
+```bash
+cp .env.example .env
+```
+
+Depois reinicie o servidor de desenvolvimento.
+
+### O app abre, mas nao salva comandos
+
+Isso acontece quando `DATABASE_URL` nao esta configurada. Configure `DATABASE_URL`, aplique as migrations e reinicie o servidor.
+
+### Erro ao executar migrations
+
+Verifique se:
+
+- `DATABASE_URL` esta correta;
+- o banco esta acessivel;
+- a URL inclui SSL quando necessario, por exemplo `sslmode=require`;
+- o usuario tem permissao para criar tipos e tabelas.
+
+### Favoritos sumiram
+
+Favoritos ficam no `localStorage` do navegador. Eles podem sumir ao limpar dados do site, trocar de navegador ou acessar por outro dispositivo.
+
+## Licenca
+
+Este projeto nao declara uma licenca no repositorio.
