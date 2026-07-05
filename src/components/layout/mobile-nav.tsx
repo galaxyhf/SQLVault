@@ -15,7 +15,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-16 z-10 flex gap-2 overflow-x-auto border-b bg-background px-4 py-3 lg:hidden">
+    <nav className="sticky top-0 z-10 flex gap-2 overflow-x-auto border-b bg-background px-4 py-3 lg:hidden">
       {items.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);

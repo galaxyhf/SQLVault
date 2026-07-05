@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, Star } from "lucide-react";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -27,7 +28,7 @@ export function Sidebar() {
           </div>
         </Link>
 
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-1">
           {items.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -47,6 +48,10 @@ export function Sidebar() {
             );
           })}
         </nav>
+
+        <div className="border-t pt-4">
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );

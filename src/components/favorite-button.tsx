@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
 
-export function FavoriteButton({ id }: { id: string }) {
+export function FavoriteButton({ id, iconOnly = false }: { id: string; iconOnly?: boolean }) {
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const active = isFavorite(id);
 
@@ -22,9 +22,15 @@ export function FavoriteButton({ id }: { id: string }) {
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={toggleFavorite}>
-      <Star className={cn("size-4", active && "fill-primary text-primary")} />
-      Favoritar
+    <Button
+      type="button"
+      variant="outline"
+      size={iconOnly ? "icon" : "sm"}
+      aria-label={iconOnly ? "Favoritar" : undefined}
+      onClick={toggleFavorite}
+    >
+      <Star className={cn("size-4", active && "fill-yellow-400 text-yellow-400")} />
+      {!iconOnly && "Favoritar"}
     </Button>
   );
 }

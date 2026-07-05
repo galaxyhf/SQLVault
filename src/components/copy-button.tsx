@@ -5,7 +5,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-export function CopyButton({ value, label = "Copiar" }: { value: string; label?: string }) {
+export function CopyButton({
+  value,
+  label = "Copiar",
+  iconOnly = false,
+}: {
+  value: string;
+  label?: string;
+  iconOnly?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function onCopy() {
@@ -16,9 +24,15 @@ export function CopyButton({ value, label = "Copiar" }: { value: string; label?:
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={onCopy}>
+    <Button
+      type="button"
+      variant="outline"
+      size={iconOnly ? "icon" : "sm"}
+      aria-label={iconOnly ? label : undefined}
+      onClick={onCopy}
+    >
       {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-      {label}
+      {!iconOnly && label}
     </Button>
   );
 }

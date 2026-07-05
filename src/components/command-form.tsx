@@ -59,8 +59,8 @@ export function CommandForm({ command }: { command?: Command }) {
           id="sqlCode"
           name="sqlCode"
           defaultValue={command?.sqlCode}
-          placeholder="select * from ..."
-          className="min-h-[420px] font-mono"
+          placeholder="SELECT * FROM ..."
+          className="min-h-56 font-mono"
         />
         {state.errors?.sqlCode ? <p className="text-sm text-destructive">{state.errors.sqlCode[0]}</p> : null}
       </div>
