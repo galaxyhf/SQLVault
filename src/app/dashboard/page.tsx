@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Database, Rows3, Server } from "lucide-react";
+import { Database, Plus, Rows3, Server } from "lucide-react";
 import { getCommandStats, listLatestCommands } from "@/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   const [stats, latestCommands] = await Promise.all([getCommandStats(), listLatestCommands(6)]);
@@ -15,9 +16,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Resumo da biblioteca SQLVault.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Resumo da biblioteca SQLVault.</p>
+        </div>
+        <Button asChild>
+          <Link href="/commands/new">
+            <Plus className="size-4" />
+            Novo comando
+          </Link>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

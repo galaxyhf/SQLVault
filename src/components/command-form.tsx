@@ -4,8 +4,8 @@ import { useActionState, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { saveCommandAction, updateCommandAction, type CommandActionState } from "@/actions/commands";
+import { SqlCodeTextarea } from "@/components/sql-code-textarea";
 import type { Command, DatabaseType } from "@/db/schema";
 import { cn, databaseLabel } from "@/lib/utils";
 
@@ -52,15 +52,14 @@ export function CommandForm({ command }: { command?: Command }) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="sqlCode" className="text-sm font-medium">
+        <label htmlFor="sqlCode" className="sr-only">
           SQL
         </label>
-        <Textarea
+        <SqlCodeTextarea
           id="sqlCode"
           name="sqlCode"
           defaultValue={command?.sqlCode}
           placeholder="SELECT * FROM ..."
-          className="min-h-56 font-mono"
         />
         {state.errors?.sqlCode ? <p className="text-sm text-destructive">{state.errors.sqlCode[0]}</p> : null}
       </div>
