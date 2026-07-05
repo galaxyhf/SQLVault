@@ -6,7 +6,7 @@ import { CommandCard } from "@/components/command-card";
 import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
-  const [stats, latestCommands] = await Promise.all([getCommandStats(), listLatestCommands(6)]);
+  const [stats, latestCommands] = await Promise.all([getCommandStats(), listLatestCommands(3)]);
 
   const cards = [
     { label: "Total de comandos", value: stats.total, icon: Rows3 },
