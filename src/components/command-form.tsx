@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { saveCommandAction, updateCommandAction, type CommandActionState } from "@/actions/commands";
 import { SqlCodeTextarea } from "@/components/sql-code-textarea";
 import type { Command, DatabaseType } from "@/db/schema";
+import { useLocalIdentity } from "@/hooks/useLocalIdentity";
 import { cn, databaseLabel } from "@/lib/utils";
 
 const initialState: CommandActionState = { ok: false };
@@ -15,11 +16,30 @@ export function CommandForm({ command }: { command?: Command }) {
   const action = command ? updateCommandAction : saveCommandAction;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [databaseType, setDatabaseType] = useState<DatabaseType>(command?.databaseType ?? "postgresql");
+  const { name, setName } = useLocalIdentity();
 
   return (
     <form action={formAction} className="max-w-4xl space-y-8">
       {command ? <input type="hidden" name="id" value={command.id} /> : null}
       <input type="hidden" name="databaseType" value={databaseType} />
+
+      <div className="space-y-2">
+        <label htmlFor="actorName" className="text-sm font-medium">
+          Seu nome
+        </label>
+        <Input
+          id="actorName"
+          name="actorName"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="Ex: Caio Silva"
+          autoComplete="name"
+        />
+        <p className="text-xs text-muted-foreground">
+          O nome será lembrado neste navegador e registrado {command ? "nesta edição" : "no comando"}.
+        </p>
+        {state.errors?.actorName ? <p className="text-sm text-destructive">{state.errors.actorName[0]}</p> : null}
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="title" className="text-sm font-medium">
