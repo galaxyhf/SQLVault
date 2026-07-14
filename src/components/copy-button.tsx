@@ -9,10 +9,12 @@ export function CopyButton({
   value,
   label = "Copiar",
   iconOnly = false,
+  className,
 }: {
   value: string;
   label?: string;
   iconOnly?: boolean;
+  className?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -30,6 +32,7 @@ export function CopyButton({
       size={iconOnly ? "icon" : "sm"}
       aria-label={iconOnly ? label : undefined}
       onClick={onCopy}
+      className={className}
     >
       {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
       {!iconOnly && label}

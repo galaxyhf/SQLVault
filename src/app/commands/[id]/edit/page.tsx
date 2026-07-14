@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BackButton } from "@/components/back-button";
 import { CommandForm } from "@/components/command-form";
 import { DeleteCommandButton } from "@/components/delete-command-button";
 import { getCommandById } from "@/db";
@@ -15,9 +16,12 @@ export default async function EditCommandPage({ params }: EditCommandPageProps) 
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Editar comando</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Atualize o título, banco ou SQL.</p>
+      <div className="space-y-4">
+        <BackButton href={`/commands/${command.id}`} />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Editar comando</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Atualize o título, banco ou SQL.</p>
+        </div>
       </div>
       <CommandForm command={command} />
       <DeleteCommandButton id={command.id} />

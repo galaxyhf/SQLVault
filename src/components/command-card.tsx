@@ -23,7 +23,11 @@ export function CommandCard({ command }: { command: Command }) {
         </div>
         <div className="flex items-start gap-2">
           <pre className="line-clamp-3 h-24 min-w-0 flex-1 overflow-hidden whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-muted-foreground">{command.sqlCode}</pre>
-          <CopyButton value={command.sqlCode} iconOnly />
+          <CopyButton
+            value={command.sqlCode}
+            iconOnly
+            className="border-primary/70 bg-accent text-accent-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          />
         </div>
         <div className="mt-auto flex flex-wrap gap-2">
           <Button asChild>

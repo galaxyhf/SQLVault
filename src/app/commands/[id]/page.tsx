@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { getCommandById } from "@/db";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/back-button";
 import { DatabaseBadge } from "@/components/database-badge";
 import { CommandMetadata } from "@/components/command-metadata";
 import { SqlEditor } from "@/components/sql-editor";
@@ -19,18 +20,21 @@ export default async function CommandPage({ params }: CommandPageProps) {
 
   return (
     <div className="max-w-5xl space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{command.title}</h1>
-          <DatabaseBadge databaseType={command.databaseType} />
-          <CommandMetadata command={command} showUpdate />
+      <div className="space-y-4">
+        <BackButton href="/commands" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3">
+            <h1 className="text-2xl font-semibold tracking-tight">{command.title}</h1>
+            <DatabaseBadge databaseType={command.databaseType} />
+            <CommandMetadata command={command} showUpdate />
+          </div>
+          <Button asChild variant="outline">
+            <Link href={`/commands/${command.id}/edit`}>
+              <Pencil className="size-4" />
+              Editar
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/commands/${command.id}/edit`}>
-            <Pencil className="size-4" />
-            Editar
-          </Link>
-        </Button>
       </div>
 
       <SqlEditor sql={command.sqlCode} />
