@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, Star } from "lucide-react";
+import { BarChart3, BookOpen, ScrollText, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/commands", label: "Biblioteca", icon: BookOpen },
   { href: "/favorites", label: "Favoritos", icon: Star },
+  { href: "/logs", label: "Auditoria", icon: ScrollText },
 ];
 
 export function MobileNav() {

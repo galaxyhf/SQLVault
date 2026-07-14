@@ -2,7 +2,15 @@ import { neon } from "@neondatabase/serverless";
 import { and, count, desc, eq, ilike, inArray } from "drizzle-orm";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
-import { commands, type DatabaseType, type NewCommand } from "@/db/schema";
+import {
+  auditLogs,
+  commands,
+  type AuditDetails,
+  type Command,
+  type CommandAuditSnapshot,
+  type DatabaseType,
+  type NewCommand,
+} from "@/db/schema";
 import { loadEnvFile } from "@/db/load-env";
 
 loadEnvFile();
@@ -135,20 +143,89 @@ export async function getCommandStats() {
   };
 }
 
+function commandSnapshot(command: Pick<Command, "title" | "databaseType" | "sqlCode">): CommandAuditSnapshot {
+  return {
+    title: command.title,
+    databaseType: command.databaseType,
+    sqlCode: command.sqlCode,
+  };
+}
+
+function changedFields(before: CommandAuditSnapshot, after: CommandAuditSnapshot) {
+  return (Object.keys(before) as Array<keyof CommandAuditSnapshot>).filter((field) => before[field] !== after[field]);
+}
+
 export async function createCommand(input: NewCommand) {
-  const [created] = await getDb().insert(commands).values(input).returning();
-  return created;
+  const id = crypto.randomUUID();
+  const after = commandSnapshot(input as CommandAuditSnapshot);
+  const database = getDb();
+  const [createdRows] = await database.batch([
+    database.insert(commands).values({ ...input, id }).returning(),
+    database.insert(auditLogs).values({
+      action: "command_created",
+      actorName: input.createdBy ?? "Não informado",
+      commandId: id,
+      commandTitle: input.title,
+      details: { after },
+    }),
+  ]);
+
+  return createdRows[0];
 }
 
 export async function updateCommand(id: string, input: Omit<NewCommand, "id" | "createdAt">) {
-  const [updated] = await getDb()
-    .update(commands)
-    .set({ ...input, updatedAt: new Date() })
-    .where(eq(commands.id, id))
-    .returning();
-  return updated;
+  const existing = await getCommandById(id);
+  if (!existing) return null;
+
+  const before = commandSnapshot(existing);
+  const after = commandSnapshot({
+    title: input.title,
+    databaseType: input.databaseType,
+    sqlCode: input.sqlCode,
+  });
+  const details: AuditDetails = { before, after, changedFields: changedFields(before, after) };
+  const database = getDb();
+  const [updatedRows] = await database.batch([
+    database
+      .update(commands)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(commands.id, id))
+      .returning(),
+    database.insert(auditLogs).values({
+      action: "command_updated",
+      actorName: input.updatedBy ?? "Não informado",
+      commandId: id,
+      commandTitle: input.title,
+      details,
+    }),
+  ]);
+
+  return updatedRows[0] ?? null;
 }
 
-export async function deleteCommand(id: string) {
-  await getDb().delete(commands).where(eq(commands.id, id));
+export async function deleteCommand(id: string, actorName: string) {
+  const existing = await getCommandById(id);
+  if (!existing) return false;
+
+  const database = getDb();
+  await database.batch([
+    database.delete(commands).where(eq(commands.id, id)),
+    database.insert(auditLogs).values({
+      action: "command_deleted",
+      actorName,
+      commandId: id,
+      commandTitle: existing.title,
+      details: { before: commandSnapshot(existing) },
+    }),
+  ]);
+
+  return true;
+}
+
+export async function listAuditLogs() {
+  if (!hasDatabaseUrl()) return [];
+
+  return getDb().query.auditLogs.findMany({
+    orderBy: [desc(auditLogs.createdAt)],
+  });
 }

@@ -13,6 +13,8 @@ O projeto foi construido com Next.js, React, TypeScript, Drizzle ORM e Neon Post
 - Botao para copiar SQL para a area de transferencia.
 - Favoritos salvos no `localStorage` do navegador.
 - Tema claro/escuro via `next-themes`.
+- Identificacao local do criador e do ultimo editor de cada comando.
+- Auditoria de criacoes, atualizacoes e exclusoes, protegida por senha administrativa.
 
 ## Tecnologias
 
@@ -49,11 +51,14 @@ Crie o arquivo de variaveis de ambiente:
 cp .env.example .env
 ```
 
-Edite `.env` e configure a URL do banco:
+Edite `.env` e configure a URL do banco e a senha da auditoria:
 
 ```env
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+SQLVAULT_ADMIN_PASSWORD="use-uma-senha-forte"
 ```
+
+`SQLVAULT_ADMIN_PASSWORD` e validada apenas no servidor. A auditoria nao cria sessao nem cookie: toda nova abertura de `/logs` solicita a senha novamente.
 
 Para usar Neon:
 
@@ -125,6 +130,8 @@ Acesse `/commands/new`, preencha:
 
 Depois clique em `Salvar`.
 
+O campo `Seu nome` fica salvo somente no navegador para facilitar os proximos cadastros. Ao salvar, o nome e registrado no banco junto ao movimento de auditoria.
+
 Importante: salvar exige `DATABASE_URL`. Sem banco configurado, o formulario mostra a mensagem para configurar o banco.
 
 ### Ver comando
@@ -145,6 +152,8 @@ Acesse `/commands/:id/edit` para atualizar titulo, banco ou SQL.
 
 Nessa tela tambem ha a opcao de excluir o comando.
 
+Para excluir, informe seu nome. O SQLVault preserva no log uma copia do comando removido.
+
 Assim como a criacao, edicao e exclusao exigem `DATABASE_URL` configurada.
 
 ### Favoritos
@@ -152,6 +161,23 @@ Assim como a criacao, edicao e exclusao exigem `DATABASE_URL` configurada.
 Acesse `/favorites` para ver comandos favoritados.
 
 Os favoritos sao armazenados apenas no navegador atual, usando `localStorage` com a chave `sqlvault:favorites`. Eles nao sao salvos no banco e nao sincronizam entre navegadores ou dispositivos.
+
+### Auditoria
+
+Acesse `/logs` e informe a senha definida em `SQLVAULT_ADMIN_PASSWORD`.
+
+A tela mostra, do evento mais recente para o mais antigo:
+
+- nome da pessoa que executou a acao;
+- data e horario no fuso de Sao Paulo;
+- criacao, atualizacao ou exclusao;
+- titulo e identificador do comando;
+- valores anteriores e novos de cada campo atualizado;
+- copia dos dados de comandos criados ou excluidos.
+
+A senha nao fica persistida. Recarregar a pagina, sair da rota ou abrir a auditoria novamente exige uma nova validacao.
+
+Ao ativar a auditoria, os comandos ja existentes sao importados como registros iniciais. Alteracoes ou exclusoes ocorridas antes dessa ativacao nao podem ser reconstruidas retroativamente.
 
 ## Scripts disponiveis
 
@@ -197,11 +223,13 @@ Cria ou atualiza o schema necessario no banco configurado em `DATABASE_URL`.
 .
 ├── src
 │   ├── actions
+│   │   ├── audit.ts             # Validacao administrativa e leitura da auditoria
 │   │   └── commands.ts          # Server Actions de criar, editar e excluir comandos
 │   ├── app
 │   │   ├── dashboard            # Dashboard
 │   │   ├── commands             # Biblioteca, detalhe, criacao e edicao
 │   │   ├── favorites            # Favoritos locais
+│   │   ├── logs                 # Auditoria protegida por senha
 │   │   ├── globals.css          # Estilos globais
 │   │   └── layout.tsx           # Layout raiz
 │   ├── components               # Componentes de UI e layout

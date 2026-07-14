@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createCommand, deleteCommand, hasDatabaseUrl, updateCommand } from "@/db";
-import { commandSchema } from "@/lib/validators";
+import { actorNameSchema, commandSchema } from "@/lib/validators";
 
 export type CommandActionState = {
   ok: boolean;
@@ -12,6 +12,7 @@ export type CommandActionState = {
     title?: string[];
     databaseType?: string[];
     sqlCode?: string[];
+    actorName?: string[];
   };
 };
 
@@ -34,6 +35,7 @@ export async function saveCommandAction(_: CommandActionState, formData: FormDat
     title: formData.get("title"),
     databaseType: formData.get("databaseType"),
     sqlCode: formData.get("sqlCode"),
+    actorName: formData.get("actorName"),
   });
 
   if (!parsed.success) {
@@ -48,10 +50,12 @@ export async function saveCommandAction(_: CommandActionState, formData: FormDat
     title: parsed.data.title,
     databaseType: parsed.data.databaseType,
     sqlCode: parsed.data.sqlCode,
+    createdBy: parsed.data.actorName,
   });
 
   revalidatePath("/dashboard");
   revalidatePath("/commands");
+  revalidatePath("/logs");
   redirect(`/commands/${command.id}`);
 }
 
@@ -64,6 +68,7 @@ export async function updateCommandAction(_: CommandActionState, formData: FormD
     title: formData.get("title"),
     databaseType: formData.get("databaseType"),
     sqlCode: formData.get("sqlCode"),
+    actorName: formData.get("actorName"),
   });
 
   if (!id) {
@@ -82,25 +87,14 @@ export async function updateCommandAction(_: CommandActionState, formData: FormD
     title: parsed.data.title,
     databaseType: parsed.data.databaseType,
     sqlCode: parsed.data.sqlCode,
+    updatedBy: parsed.data.actorName,
   });
 
   revalidatePath("/dashboard");
   revalidatePath("/commands");
   revalidatePath(`/commands/${id}`);
+  revalidatePath("/logs");
   redirect(`/commands/${id}`);
-}
-
-export async function deleteCommandAction(formData: FormData) {
-  const databaseError = requireDatabase();
-  if (databaseError) return databaseError;
-
-  const id = String(formData.get("id") ?? "");
-  if (!id) return { ok: false, message: "Comando inválido." };
-
-  await deleteCommand(id);
-  revalidatePath("/dashboard");
-  revalidatePath("/commands");
-  redirect("/commands");
 }
 
 export async function deleteCommandWithStateAction(
@@ -111,10 +105,19 @@ export async function deleteCommandWithStateAction(
   if (databaseError) return databaseError;
 
   const id = String(formData.get("id") ?? "");
+  const actor = actorNameSchema.safeParse(formData.get("actorName"));
   if (!id) return { ok: false, message: "Comando inválido." };
+  if (!actor.success) {
+    return {
+      ok: false,
+      message: "Informe seu nome antes de excluir.",
+      errors: { actorName: actor.error.flatten().formErrors },
+    };
+  }
 
-  await deleteCommand(id);
+  await deleteCommand(id, actor.data);
   revalidatePath("/dashboard");
   revalidatePath("/commands");
+  revalidatePath("/logs");
   redirect("/commands");
 }
