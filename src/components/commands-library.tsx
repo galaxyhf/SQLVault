@@ -18,6 +18,13 @@ const filters = [
 
 const pageSize = 9;
 
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR");
+}
+
 function getInitialType(value?: string): DatabaseType | "all" {
   return value === "postgresql" || value === "sqlserver" ? value : "all";
 }
@@ -35,10 +42,11 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
   const [page, setPage] = useState(Math.max(initialPage, 1));
 
   const filteredCommands = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = normalizeSearchText(query.trim());
 
     return commands.filter((command) => {
-      const matchesQuery = normalizedQuery ? command.title.toLowerCase().includes(normalizedQuery) : true;
+      const searchableContent = normalizeSearchText(`${command.title}\n${command.sqlCode}`);
+      const matchesQuery = normalizedQuery ? searchableContent.includes(normalizedQuery) : true;
       const matchesType = databaseType === "all" ? true : command.databaseType === databaseType;
 
       return matchesQuery && matchesType;
@@ -80,7 +88,8 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
           <Input
             value={query}
             onChange={(event) => updateQuery(event.target.value)}
-            placeholder="Pesquisar por título"
+            placeholder="Pesquisar por título ou trecho do SQL"
+            aria-label="Pesquisar comandos por título ou trecho do SQL"
             className="pl-9"
           />
         </div>

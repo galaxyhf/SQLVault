@@ -10,20 +10,26 @@ import type { Command } from "@/db/schema";
 
 export function CommandCard({ command }: { command: Command }) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="flex h-full flex-col">
+      <CardHeader className="min-h-[5.25rem]">
         <div className="flex items-start justify-between gap-4">
           <CardTitle className="line-clamp-2 leading-snug">{command.title}</CardTitle>
           <DatabaseBadge databaseType={command.databaseType} />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <CommandMetadata command={command} />
-        <div className="flex items-start gap-2">
-          <pre className="line-clamp-3 min-w-0 flex-1 overflow-hidden whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-muted-foreground">{command.sqlCode}</pre>
-          <CopyButton value={command.sqlCode} iconOnly />
+      <CardContent className="flex flex-1 flex-col gap-3">
+        <div className="min-h-9">
+          <CommandMetadata command={command} />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex items-start gap-2">
+          <pre className="line-clamp-3 h-24 min-w-0 flex-1 overflow-hidden whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-muted-foreground">{command.sqlCode}</pre>
+          <CopyButton
+            value={command.sqlCode}
+            iconOnly
+            className="border-primary/70 bg-accent text-accent-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          />
+        </div>
+        <div className="mt-auto flex flex-wrap gap-2">
           <Button asChild>
             <Link href={`/commands/${command.id}`}>
               <ExternalLink className="size-4" />
