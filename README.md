@@ -7,7 +7,7 @@ O projeto foi construido com Next.js, React, TypeScript, Drizzle ORM e Neon Post
 ## Funcionalidades
 
 - Dashboard com total de comandos, comandos PostgreSQL e comandos SQL Server.
-- Biblioteca com busca por titulo, filtro por tipo de banco e paginacao.
+- Biblioteca com busca por titulo ou trecho do SQL, sem diferenciar acentos, filtro por tipo de banco e paginacao.
 - Cadastro, edicao e exclusao de comandos SQL.
 - Visualizacao de SQL com numeracao de linhas e destaque simples de sintaxe.
 - Botao para copiar SQL para a area de transferencia.
@@ -112,7 +112,7 @@ Acesse `/commands` para navegar pela biblioteca.
 
 Na biblioteca voce pode:
 
-- pesquisar por titulo;
+- pesquisar por titulo ou trecho do SQL, sem diferenciar acentos;
 - filtrar por `Todos`, `PostgreSQL` ou `SQL Server`;
 - abrir um comando;
 - copiar o SQL;
@@ -152,7 +152,7 @@ Acesse `/commands/:id/edit` para atualizar titulo, banco ou SQL.
 
 Nessa tela tambem ha a opcao de excluir o comando.
 
-Para excluir, informe seu nome. O SQLVault preserva no log uma copia do comando removido.
+Para excluir, o SQLVault usa o mesmo nome informado no topo do formulario de edicao e preserva no log uma copia do comando removido.
 
 Assim como a criacao, edicao e exclusao exigem `DATABASE_URL` configurada.
 
