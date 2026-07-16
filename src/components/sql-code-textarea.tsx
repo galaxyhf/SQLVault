@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, UIEvent } from "react";
-import { highlightSqlLine } from "@/lib/sql-highlight";
+import { highlightSqlLines } from "@/lib/sql-highlight";
 import { cn } from "@/lib/utils";
 
 type SqlCodeTextareaProps = {
@@ -17,7 +17,7 @@ export function SqlCodeTextarea({ id, name, defaultValue = "", placeholder, clas
   const [value, setValue] = useState(defaultValue);
   const highlightRef = useRef<HTMLPreElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lines = (value || " ").split("\n");
+  const lines = highlightSqlLines(value || " ");
 
   useEffect(() => {
     function updateFromTextarea() {
@@ -78,7 +78,7 @@ export function SqlCodeTextarea({ id, name, defaultValue = "", placeholder, clas
                 <span className="select-none border-r bg-secondary/40 px-4 text-right text-muted-foreground">
                   {index + 1}
                 </span>
-                <span className="px-4" dangerouslySetInnerHTML={{ __html: highlightSqlLine(line) || "&nbsp;" }} />
+                <span className="px-4" dangerouslySetInnerHTML={{ __html: line || "&nbsp;" }} />
               </div>
             ))}
           </code>
