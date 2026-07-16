@@ -1,9 +1,9 @@
 import { CopyButton } from "@/components/copy-button";
-import { highlightSqlLine } from "@/lib/sql-highlight";
+import { highlightSqlLines } from "@/lib/sql-highlight";
 import { cn } from "@/lib/utils";
 
 export function SqlEditor({ sql, className }: { sql: string; className?: string }) {
-  const lines = sql.split("\n");
+  const lines = highlightSqlLines(sql);
 
   return (
     <div className={cn("overflow-hidden rounded-lg border bg-card", className)}>
@@ -19,7 +19,7 @@ export function SqlEditor({ sql, className }: { sql: string; className?: string 
                 <span className="select-none border-r bg-secondary/40 px-4 text-right text-muted-foreground">
                   {index + 1}
                 </span>
-                <span className="px-4" dangerouslySetInnerHTML={{ __html: highlightSqlLine(line) || "&nbsp;" }} />
+                <span className="px-4" dangerouslySetInnerHTML={{ __html: line || "&nbsp;" }} />
               </div>
             ))}
           </code>
