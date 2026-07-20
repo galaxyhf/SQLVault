@@ -54,6 +54,10 @@ export function useFavorites() {
     writeFavorites(readFavorites().filter((favorite) => favorite !== id));
   }, []);
 
+  const setFavoritesOrder = useCallback((ids: string[]) => {
+    writeFavorites(Array.from(new Set(ids.filter(Boolean))));
+  }, []);
+
   const isFavorite = useCallback((id: string) => favorites.includes(id), [favorites]);
 
   return useMemo(
@@ -62,7 +66,8 @@ export function useFavorites() {
       addFavorite,
       removeFavorite,
       isFavorite,
+      setFavoritesOrder,
     }),
-    [addFavorite, favorites, isFavorite, removeFavorite],
+    [addFavorite, favorites, isFavorite, removeFavorite, setFavoritesOrder],
   );
 }

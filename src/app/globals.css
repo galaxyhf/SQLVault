@@ -83,3 +83,49 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--primary) 35%, transparent);
 }
+
+@keyframes library-card-jiggle {
+  from {
+    transform: translateY(-0.5px) rotate(-0.22deg);
+  }
+  to {
+    transform: translateY(0.5px) rotate(0.22deg);
+  }
+}
+
+.library-card-editing {
+  animation: library-card-jiggle 180ms ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+.library-card-editing:nth-child(2n) {
+  animation-delay: -90ms;
+  animation-direction: alternate-reverse;
+}
+
+.library-card-editing:nth-child(3n) {
+  animation-duration: 210ms;
+}
+
+.library-card-placeholder {
+  animation: none;
+  opacity: 0.3;
+}
+
+.library-card-drag-preview {
+  transform: scale(1.015) rotate(0.15deg);
+  transform-origin: center;
+}
+
+.library-card-drag-preview > :first-child {
+  border-color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library-card-editing,
+  .library-card-placeholder,
+  .library-card-drag-preview {
+    animation: none;
+    transform: none;
+  }
+}
