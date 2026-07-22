@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { and, count, desc, eq, ilike, inArray } from "drizzle-orm";
+import { and, arrayContains, count, desc, eq, ilike, inArray } from "drizzle-orm";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
 import {
@@ -8,7 +8,7 @@ import {
   type AuditDetails,
   type Command,
   type CommandAuditSnapshot,
-  type DatabaseType,
+  type CommandTag,
   type NewCommand,
 } from "@/db/schema";
 import { loadEnvFile } from "@/db/load-env";
@@ -35,7 +35,7 @@ export function getDb() {
 
 export type CommandFilters = {
   query?: string;
-  databaseType?: DatabaseType | "all";
+  tag?: CommandTag | "all";
   page?: number;
   pageSize?: number;
 };
@@ -59,8 +59,8 @@ export async function listCommands(filters: CommandFilters = {}) {
   if (filters.query?.trim()) {
     clauses.push(ilike(commands.title, `%${filters.query.trim()}%`));
   }
-  if (filters.databaseType && filters.databaseType !== "all") {
-    clauses.push(eq(commands.databaseType, filters.databaseType));
+  if (filters.tag && filters.tag !== "all") {
+    clauses.push(arrayContains(commands.tags, [filters.tag]));
   }
 
   const where = clauses.length === 1 ? clauses[0] : clauses.length > 1 ? and(...clauses) : undefined;
@@ -124,40 +124,45 @@ export async function getCommandStats() {
   if (!hasDatabaseUrl()) {
     return {
       total: 0,
-      postgresql: 0,
-      sqlserver: 0,
+      conferencia: 0,
+      conversao: 0,
+      geral: 0,
     };
   }
 
   const database = getDb();
-  const [totalRows, postgresRows, sqlServerRows] = await Promise.all([
+  const [totalRows, conferenciaRows, conversaoRows, geralRows] = await Promise.all([
     database.select({ value: count() }).from(commands),
-    database.select({ value: count() }).from(commands).where(eq(commands.databaseType, "postgresql")),
-    database.select({ value: count() }).from(commands).where(eq(commands.databaseType, "sqlserver")),
+    database.select({ value: count() }).from(commands).where(arrayContains(commands.tags, ["conferencia"])),
+    database.select({ value: count() }).from(commands).where(arrayContains(commands.tags, ["conversao"])),
+    database.select({ value: count() }).from(commands).where(arrayContains(commands.tags, ["geral"])),
   ]);
 
   return {
     total: totalRows[0]?.value ?? 0,
-    postgresql: postgresRows[0]?.value ?? 0,
-    sqlserver: sqlServerRows[0]?.value ?? 0,
+    conferencia: conferenciaRows[0]?.value ?? 0,
+    conversao: conversaoRows[0]?.value ?? 0,
+    geral: geralRows[0]?.value ?? 0,
   };
 }
 
-function commandSnapshot(command: Pick<Command, "title" | "databaseType" | "sqlCode">): CommandAuditSnapshot {
+function commandSnapshot(command: Pick<Command, "title" | "tags" | "sqlCode">): CommandAuditSnapshot {
   return {
     title: command.title,
-    databaseType: command.databaseType,
+    tags: command.tags,
     sqlCode: command.sqlCode,
   };
 }
 
 function changedFields(before: CommandAuditSnapshot, after: CommandAuditSnapshot) {
-  return (Object.keys(before) as Array<keyof CommandAuditSnapshot>).filter((field) => before[field] !== after[field]);
+  return (Object.keys(before) as Array<keyof CommandAuditSnapshot>).filter(
+    (field) => JSON.stringify(before[field]) !== JSON.stringify(after[field]),
+  );
 }
 
-export async function createCommand(input: NewCommand) {
+export async function createCommand(input: NewCommand & { tags: CommandTag[] }) {
   const id = crypto.randomUUID();
-  const after = commandSnapshot(input as CommandAuditSnapshot);
+  const after = commandSnapshot(input);
   const database = getDb();
   const [createdRows] = await database.batch([
     database.insert(commands).values({ ...input, id }).returning(),
@@ -173,14 +178,17 @@ export async function createCommand(input: NewCommand) {
   return createdRows[0];
 }
 
-export async function updateCommand(id: string, input: Omit<NewCommand, "id" | "createdAt">) {
+export async function updateCommand(
+  id: string,
+  input: Omit<NewCommand, "id" | "createdAt" | "tags"> & { tags: CommandTag[] },
+) {
   const existing = await getCommandById(id);
   if (!existing) return null;
 
   const before = commandSnapshot(existing);
   const after = commandSnapshot({
     title: input.title,
-    databaseType: input.databaseType,
+    tags: input.tags,
     sqlCode: input.sqlCode,
   });
   const details: AuditDetails = { before, after, changedFields: changedFields(before, after) };

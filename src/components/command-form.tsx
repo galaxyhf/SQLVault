@@ -1,21 +1,22 @@
 "use client";
 
-import { useActionState, useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { FileCheck2, Loader2, Save } from "lucide-react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { ChevronDown, FileCheck2, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveCommandAction, updateCommandAction, type CommandActionState } from "@/actions/commands";
 import { SqlCodeTextarea } from "@/components/sql-code-textarea";
-import type { Command, DatabaseType } from "@/db/schema";
+import type { Command, CommandTag } from "@/db/schema";
 import { useLocalIdentity } from "@/hooks/useLocalIdentity";
 import {
   COMMAND_IMPORT_STORAGE_KEY,
   isImportedCommandDraft,
   type ImportedCommandDraft,
 } from "@/lib/command-import";
-import { cn, databaseLabel } from "@/lib/utils";
+import { tagLabel } from "@/lib/utils";
 
 const initialState: CommandActionState = { ok: false };
+const tagOptions: CommandTag[] = ["conferencia", "conversao", "geral"];
 
 function subscribeToImportDraft() {
   return () => undefined;
@@ -65,10 +66,27 @@ type CommandFormContentProps = {
 function CommandFormContent({ command, importedDraft, storageKey }: CommandFormContentProps) {
   const action = command ? updateCommandAction : saveCommandAction;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [databaseType, setDatabaseType] = useState<DatabaseType>(
-    importedDraft?.databaseType ?? command?.databaseType ?? "postgresql",
-  );
+  const [selectedTags, setSelectedTags] = useState<CommandTag[]>(importedDraft?.tags ?? command?.tags ?? ["geral"]);
+  const tagDropdownRef = useRef<HTMLDetailsElement>(null);
   const { name, setName } = useLocalIdentity();
+
+  useEffect(() => {
+    function closeTagDropdown(event: PointerEvent) {
+      const dropdown = tagDropdownRef.current;
+      if (!dropdown?.open || !(event.target instanceof Node) || dropdown.contains(event.target)) return;
+
+      dropdown.removeAttribute("open");
+    }
+
+    document.addEventListener("pointerdown", closeTagDropdown);
+    return () => document.removeEventListener("pointerdown", closeTagDropdown);
+  }, []);
+
+  function toggleTag(tag: CommandTag) {
+    setSelectedTags((currentTags) =>
+      currentTags.includes(tag) ? currentTags.filter((currentTag) => currentTag !== tag) : [...currentTags, tag],
+    );
+  }
 
   return (
     <form
@@ -79,7 +97,6 @@ function CommandFormContent({ command, importedDraft, storageKey }: CommandFormC
       className="max-w-4xl space-y-8"
     >
       {command ? <input type="hidden" name="id" value={command.id} /> : null}
-      <input type="hidden" name="databaseType" value={databaseType} />
 
       {importedDraft ? (
         <div className="flex items-start gap-3 rounded-lg border border-primary/40 bg-accent/50 px-4 py-3 text-sm text-accent-foreground">
@@ -125,27 +142,37 @@ function CommandFormContent({ command, importedDraft, storageKey }: CommandFormC
         {state.errors?.title ? <p className="text-sm text-destructive">{state.errors.title[0]}</p> : null}
       </div>
 
-      <div className="space-y-3">
-        <p className="text-sm font-medium">Banco</p>
-        <div className="flex flex-wrap gap-2">
-          {(["postgresql", "sqlserver"] as DatabaseType[]).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setDatabaseType(type)}
-              className={cn(
-                "cursor-pointer rounded-md border px-3 py-1.5 text-sm transition-colors",
-                databaseType === type
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-secondary text-secondary-foreground hover:border-primary/60",
-              )}
-            >
-              {databaseLabel(type)}
-            </button>
-          ))}
-        </div>
-        {state.errors?.databaseType ? <p className="text-sm text-destructive">{state.errors.databaseType[0]}</p> : null}
-      </div>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">Tags</legend>
+        <p className="text-xs text-muted-foreground">Selecione uma ou mais tags para classificar o comando.</p>
+        <details ref={tagDropdownRef} className="group relative max-w-md">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <span className={selectedTags.length > 0 ? "text-foreground" : "text-muted-foreground"}>
+              {selectedTags.length > 0 ? selectedTags.map(tagLabel).join(", ") : "Selecionar tags"}
+            </span>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+            {tagOptions.map((tag) => (
+              <label
+                key={tag}
+                className="flex cursor-pointer items-center gap-3 border-b px-3 py-2.5 text-sm transition-colors last:border-b-0 hover:bg-muted/50"
+              >
+                <input
+                  type="checkbox"
+                  name="tags"
+                  value={tag}
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => toggleTag(tag)}
+                  className="size-4 accent-primary"
+                />
+                <span>{tagLabel(tag)}</span>
+              </label>
+            ))}
+          </div>
+        </details>
+        {state.errors?.tags ? <p className="text-sm text-destructive">{state.errors.tags[0]}</p> : null}
+      </fieldset>
 
       <div className="space-y-2">
         <label htmlFor="sqlCode" className="sr-only">

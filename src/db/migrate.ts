@@ -25,7 +25,7 @@ async function main() {
   await sql`
     DO $$
     BEGIN
-      CREATE TYPE database_type AS ENUM ('postgresql', 'sqlserver');
+      CREATE TYPE command_tag AS ENUM ('conferencia', 'conversao', 'geral');
     EXCEPTION
       WHEN duplicate_object THEN NULL;
     END $$;
@@ -42,7 +42,7 @@ async function main() {
     CREATE TABLE IF NOT EXISTS commands (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
       title text NOT NULL,
-      database_type database_type NOT NULL,
+      tags command_tag[] DEFAULT ARRAY['geral']::command_tag[] NOT NULL,
       sql_code text NOT NULL,
       created_by text DEFAULT 'Não informado' NOT NULL,
       updated_by text,
@@ -52,9 +52,12 @@ async function main() {
   `;
   await sql`
     ALTER TABLE commands
+      ADD COLUMN IF NOT EXISTS tags command_tag[] DEFAULT ARRAY['geral']::command_tag[] NOT NULL,
       ADD COLUMN IF NOT EXISTS created_by text DEFAULT 'Não informado' NOT NULL,
       ADD COLUMN IF NOT EXISTS updated_by text
   `;
+  await sql`ALTER TABLE commands DROP COLUMN IF EXISTS database_type`;
+  await sql`DROP TYPE IF EXISTS database_type`;
   await sql`
     CREATE TABLE IF NOT EXISTS audit_logs (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -78,7 +81,7 @@ async function main() {
       jsonb_build_object(
         'after', jsonb_build_object(
           'title', commands.title,
-          'databaseType', commands.database_type,
+          'tags', commands.tags,
           'sqlCode', commands.sql_code
         ),
         'imported', true

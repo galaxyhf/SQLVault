@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/copy-button";
 import { CommandMetadata } from "@/components/command-metadata";
-import { DatabaseBadge } from "@/components/database-badge";
+import { CommandTags } from "@/components/command-tags";
 import { FavoriteButton } from "@/components/favorite-button";
 import type { Command } from "@/db/schema";
 
@@ -12,10 +12,8 @@ export function CommandCard({ command }: { command: Command }) {
   return (
     <Card className="flex h-full flex-col">
       <CardHeader className="min-h-[5.25rem]">
-        <div className="flex items-start justify-between gap-4">
-          <CardTitle className="line-clamp-2 leading-snug">{command.title}</CardTitle>
-          <DatabaseBadge databaseType={command.databaseType} />
-        </div>
+        <CardTitle className="line-clamp-2 leading-snug">{command.title}</CardTitle>
+        <CommandTags tags={command.tags} />
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <div className="min-h-9">

@@ -1,11 +1,11 @@
-import type { DatabaseType } from "@/db/schema";
+import type { CommandTag } from "@/db/schema";
 
 export const COMMAND_IMPORT_STORAGE_KEY = "sqlvault:command-import";
 export const MAX_COMMAND_FILE_SIZE = 1024 * 1024;
 
 export type ImportedCommandDraft = {
   title: string;
-  databaseType: DatabaseType;
+  tags: CommandTag[];
   sqlCode: string;
   fileName: string;
 };
@@ -19,17 +19,27 @@ function titleFromFileName(fileName: string) {
   return normalized.charAt(0).toLocaleUpperCase("pt-BR") + normalized.slice(1);
 }
 
-function parseDatabaseType(value: unknown): DatabaseType {
-  if (typeof value !== "string") {
-    throw new Error("Informe o banco como postgresql ou sqlserver.");
-  }
+function parseTag(value: unknown): CommandTag {
+  if (typeof value !== "string") throw new Error("As tags precisam estar em formato de texto.");
 
-  const normalized = value.toLowerCase().replace(/[\s_-]+/g, "").trim();
+  const normalized = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
 
-  if (normalized === "postgres" || normalized === "postgresql") return "postgresql";
-  if (normalized === "sqlserver" || normalized === "mssql") return "sqlserver";
+  if (normalized === "conferencia" || normalized === "conversao" || normalized === "geral") return normalized;
 
-  throw new Error("Banco inválido. Use postgresql ou sqlserver.");
+  throw new Error("Tag inválida. Use Conferência, Conversão ou Geral.");
+}
+
+function parseTags(value: unknown): CommandTag[] {
+  const values = Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [];
+  const tags = [...new Set(values.map(parseTag))];
+
+  if (tags.length === 0) throw new Error("Selecione pelo menos uma tag.");
+
+  return tags;
 }
 
 function validateDraft(draft: ImportedCommandDraft) {
@@ -53,7 +63,7 @@ function parseJsonFile(fileName: string, content: string): ImportedCommandDraft 
   }
 
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("O JSON precisa conter title, databaseType e sqlCode.");
+    throw new Error("O JSON precisa conter title, tags e sqlCode.");
   }
 
   const data = parsed as Record<string, unknown>;
@@ -64,7 +74,7 @@ function parseJsonFile(fileName: string, content: string): ImportedCommandDraft 
 
   return validateDraft({
     title: data.title,
-    databaseType: parseDatabaseType(data.databaseType),
+    tags: parseTags(data.tags),
     sqlCode: data.sqlCode,
     fileName,
   });
@@ -74,19 +84,19 @@ function parseSqlFile(fileName: string, content: string): ImportedCommandDraft {
   const lines = content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n");
   const sqlLines: string[] = [];
   let title: string | undefined;
-  let databaseType: DatabaseType = "postgresql";
+  let tags: CommandTag[] = ["geral"];
   let reachedSql = false;
 
   for (const line of lines) {
     if (!reachedSql) {
-      const metadata = line.match(/^\s*--\s*(title|titulo|título|database|banco)\s*:\s*(.*?)\s*$/i);
+      const metadata = line.match(/^\s*--\s*(title|titulo|título|tag|tags)\s*:\s*(.*?)\s*$/i);
 
       if (metadata) {
         const key = metadata[1].toLowerCase();
         const value = metadata[2];
 
         if (key === "title" || key === "titulo" || key === "título") title = value;
-        else databaseType = parseDatabaseType(value);
+        else tags = parseTags(value);
 
         continue;
       }
@@ -100,7 +110,7 @@ function parseSqlFile(fileName: string, content: string): ImportedCommandDraft {
 
   return validateDraft({
     title: title ?? titleFromFileName(fileName),
-    databaseType,
+    tags,
     sqlCode: sqlLines.join("\n"),
     fileName,
   });
@@ -124,6 +134,8 @@ export function isImportedCommandDraft(value: unknown): value is ImportedCommand
     typeof draft.title === "string" &&
     typeof draft.sqlCode === "string" &&
     typeof draft.fileName === "string" &&
-    (draft.databaseType === "postgresql" || draft.databaseType === "sqlserver")
+    Array.isArray(draft.tags) &&
+    draft.tags.length > 0 &&
+    draft.tags.every((tag) => tag === "conferencia" || tag === "conversao" || tag === "geral")
   );
 }

@@ -6,14 +6,15 @@ import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type Pointe
 import { CommandCard } from "@/components/command-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Command, DatabaseType } from "@/db/schema";
+import type { Command, CommandTag } from "@/db/schema";
 import { useCommandOrder } from "@/hooks/useCommandOrder";
 import { cn } from "@/lib/utils";
 
 const filters = [
   { value: "all", label: "Todos" },
-  { value: "postgresql", label: "PostgreSQL" },
-  { value: "sqlserver", label: "SQL Server" },
+  { value: "conferencia", label: "Conferência" },
+  { value: "conversao", label: "Conversão" },
+  { value: "geral", label: "Geral" },
 ] as const;
 
 const pageSize = 9;
@@ -25,14 +26,14 @@ function normalizeSearchText(value: string) {
     .toLocaleLowerCase("pt-BR");
 }
 
-function getInitialType(value?: string): DatabaseType | "all" {
-  return value === "postgresql" || value === "sqlserver" ? value : "all";
+function getInitialTags(value?: string): CommandTag[] {
+  return value === "conferencia" || value === "conversao" || value === "geral" ? [value] : [];
 }
 
 type CommandsLibraryProps = {
   commands: Command[];
   initialQuery?: string;
-  initialDatabaseType?: string;
+  initialTag?: string;
   initialPage?: number;
 };
 
@@ -47,9 +48,9 @@ type DragPreview = {
   height: number;
 };
 
-export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseType, initialPage = 1 }: CommandsLibraryProps) {
+export function CommandsLibrary({ commands, initialQuery = "", initialTag, initialPage = 1 }: CommandsLibraryProps) {
   const [query, setQuery] = useState(initialQuery);
-  const [databaseType, setDatabaseType] = useState<DatabaseType | "all">(getInitialType(initialDatabaseType));
+  const [selectedTags, setSelectedTags] = useState<CommandTag[]>(getInitialTags(initialTag));
   const [page, setPage] = useState(Math.max(initialPage, 1));
   const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
   const draftOrderRef = useRef<string[] | null>(null);
@@ -86,11 +87,12 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
     return orderedCommands.filter((command) => {
       const searchableContent = normalizeSearchText(`${command.title}\n${command.sqlCode}`);
       const matchesQuery = normalizedQuery ? searchableContent.includes(normalizedQuery) : true;
-      const matchesType = databaseType === "all" ? true : command.databaseType === databaseType;
+      const matchesTag =
+        selectedTags.length === 0 ? true : selectedTags.some((selectedTag) => command.tags.includes(selectedTag));
 
-      return matchesQuery && matchesType;
+      return matchesQuery && matchesTag;
     });
-  }, [databaseType, orderedCommands, query]);
+  }, [orderedCommands, query, selectedTags]);
 
   const pageCount = Math.max(Math.ceil(filteredCommands.length / pageSize), 1);
   const currentPage = Math.min(page, pageCount);
@@ -109,9 +111,18 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
     setPage(1);
   }
 
-  function updateFilter(value: DatabaseType | "all") {
-    setDatabaseType(value);
+  function updateFilter(value: CommandTag | "all") {
+    setSelectedTags((currentTags) => {
+      if (value === "all") return [];
+      return currentTags.includes(value)
+        ? currentTags.filter((currentTag) => currentTag !== value)
+        : [...currentTags, value];
+    });
     setPage(1);
+  }
+
+  function isFilterSelected(value: CommandTag | "all") {
+    return value === "all" ? selectedTags.length === 0 : selectedTags.includes(value);
   }
 
   function moveCommand(commandId: string, targetIndex: number) {
@@ -294,7 +305,7 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
               className="pl-9"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
               <Button
                 key={filter.value}
@@ -302,7 +313,8 @@ export function CommandsLibrary({ commands, initialQuery = "", initialDatabaseTy
                 variant="outline"
                 size="sm"
                 onClick={() => updateFilter(filter.value)}
-                className={cn(databaseType === filter.value && "border-primary bg-accent")}
+                aria-pressed={isFilterSelected(filter.value)}
+                className={cn(isFilterSelected(filter.value) && "border-primary bg-accent")}
               >
                 {filter.label}
               </Button>

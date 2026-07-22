@@ -10,7 +10,7 @@ export type CommandActionState = {
   message?: string;
   errors?: {
     title?: string[];
-    databaseType?: string[];
+    tags?: string[];
     sqlCode?: string[];
     actorName?: string[];
   };
@@ -33,7 +33,7 @@ export async function saveCommandAction(_: CommandActionState, formData: FormDat
 
   const parsed = commandSchema.safeParse({
     title: formData.get("title"),
-    databaseType: formData.get("databaseType"),
+    tags: formData.getAll("tags"),
     sqlCode: formData.get("sqlCode"),
     actorName: formData.get("actorName"),
   });
@@ -48,7 +48,7 @@ export async function saveCommandAction(_: CommandActionState, formData: FormDat
 
   const command = await createCommand({
     title: parsed.data.title,
-    databaseType: parsed.data.databaseType,
+    tags: parsed.data.tags,
     sqlCode: parsed.data.sqlCode,
     createdBy: parsed.data.actorName,
   });
@@ -66,7 +66,7 @@ export async function updateCommandAction(_: CommandActionState, formData: FormD
   const id = String(formData.get("id") ?? "");
   const parsed = commandSchema.safeParse({
     title: formData.get("title"),
-    databaseType: formData.get("databaseType"),
+    tags: formData.getAll("tags"),
     sqlCode: formData.get("sqlCode"),
     actorName: formData.get("actorName"),
   });
@@ -85,7 +85,7 @@ export async function updateCommandAction(_: CommandActionState, formData: FormD
 
   await updateCommand(id, {
     title: parsed.data.title,
-    databaseType: parsed.data.databaseType,
+    tags: parsed.data.tags,
     sqlCode: parsed.data.sqlCode,
     updatedBy: parsed.data.actorName,
   });

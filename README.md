@@ -1,13 +1,13 @@
 # SQLVault
 
-SQLVault e uma aplicacao web para guardar, pesquisar, copiar e favoritar comandos SQL de PostgreSQL e SQL Server.
+SQLVault e uma aplicacao web para guardar, pesquisar, copiar e favoritar comandos SQL.
 
 O projeto foi construido com Next.js, React, TypeScript, Drizzle ORM e Neon PostgreSQL.
 
 ## Funcionalidades
 
-- Dashboard com total de comandos, comandos PostgreSQL e comandos SQL Server.
-- Biblioteca com busca por titulo ou trecho do SQL, sem diferenciar acentos, filtro por tipo de banco e paginacao.
+- Dashboard com total de comandos e contagem por tags.
+- Biblioteca com busca por titulo ou trecho do SQL, sem diferenciar acentos, filtro por tag e paginacao.
 - Cadastro, edicao e exclusao de comandos SQL.
 - Visualizacao de SQL com numeracao de linhas e destaque simples de sintaxe.
 - Botao para copiar SQL para a area de transferencia.
@@ -102,8 +102,9 @@ A rota `/` redireciona automaticamente para `/dashboard`.
 Acesse `/dashboard` para ver:
 
 - total de comandos cadastrados;
-- total de comandos PostgreSQL;
-- total de comandos SQL Server;
+- total de comandos com a tag Conferencia;
+- total de comandos com a tag Conversao;
+- total de comandos com a tag Geral;
 - ultimos comandos cadastrados.
 
 ### Biblioteca
@@ -113,7 +114,7 @@ Acesse `/commands` para navegar pela biblioteca.
 Na biblioteca voce pode:
 
 - pesquisar por titulo ou trecho do SQL, sem diferenciar acentos;
-- filtrar por `Todos`, `PostgreSQL` ou `SQL Server`;
+- filtrar por `Todos`, `Conferencia`, `Conversao` ou `Geral`;
 - abrir um comando;
 - copiar o SQL;
 - favoritar um comando;
@@ -125,7 +126,7 @@ Na biblioteca voce pode:
 Acesse `/commands/new`, preencha:
 
 - `Titulo`: minimo de 2 e maximo de 120 caracteres;
-- `Banco`: PostgreSQL ou SQL Server;
+- `Tags`: selecione uma ou mais entre Conferencia, Conversao e Geral;
 - `SQL`: minimo de 5 caracteres.
 
 Depois clique em `Salvar`.
@@ -134,6 +135,25 @@ O campo `Seu nome` fica salvo somente no navegador para facilitar os proximos ca
 
 Importante: salvar exige `DATABASE_URL`. Sem banco configurado, o formulario mostra a mensagem para configurar o banco.
 
+O botao `Importar arquivo` no dashboard aceita `.sql`, `.txt` e `.json`. Em arquivos SQL ou texto, use metadados opcionais no inicio:
+
+```sql
+-- title: Conferir pedidos duplicados
+-- tags: conferencia, geral
+
+SELECT * FROM pedidos;
+```
+
+No JSON, informe as tags como uma lista:
+
+```json
+{
+  "title": "Converter datas",
+  "tags": ["conversao", "geral"],
+  "sqlCode": "SELECT CAST(created_at AS date) FROM pedidos;"
+}
+```
+
 ### Ver comando
 
 Acesse `/commands/:id` para ver o comando completo.
@@ -141,7 +161,7 @@ Acesse `/commands/:id` para ver o comando completo.
 Essa tela mostra:
 
 - titulo;
-- tipo de banco;
+- tags;
 - SQL com numeracao de linhas;
 - botao para copiar;
 - botao para editar.
@@ -254,15 +274,15 @@ Campos:
 
 - `id`: UUID gerado automaticamente.
 - `title`: titulo do comando.
-- `database_type`: enum `postgresql` ou `sqlserver`.
+- `tags`: lista com uma ou mais tags do enum `command_tag`.
 - `sql_code`: conteudo SQL.
 - `created_at`: data de criacao.
 - `updated_at`: data da ultima atualizacao.
 
-O enum `database_type` e criado pela migration inicial:
+O enum `command_tag` aceita as classificacoes disponiveis:
 
 ```sql
-CREATE TYPE "database_type" AS ENUM ('postgresql', 'sqlserver');
+CREATE TYPE "command_tag" AS ENUM ('conferencia', 'conversao', 'geral');
 ```
 
 ## Fluxo recomendado de desenvolvimento

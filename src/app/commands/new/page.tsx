@@ -15,7 +15,7 @@ export default async function NewCommandPage({ searchParams }: NewCommandPagePro
         <BackButton href="/commands" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Novo comando</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Salve uma consulta de PostgreSQL ou SQL Server.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Salve e classifique um comando SQL.</p>
         </div>
       </div>
       <CommandForm importId={importId} />
