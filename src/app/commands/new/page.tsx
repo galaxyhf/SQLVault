@@ -1,7 +1,14 @@
 import { BackButton } from "@/components/back-button";
 import { CommandForm } from "@/components/command-form";
 
-export default function NewCommandPage() {
+type NewCommandPageProps = {
+  searchParams: Promise<{ imported?: string }>;
+};
+
+export default async function NewCommandPage({ searchParams }: NewCommandPageProps) {
+  const { imported } = await searchParams;
+  const importId = imported && /^[0-9a-f-]{36}$/i.test(imported) ? imported : undefined;
+
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -11,7 +18,7 @@ export default function NewCommandPage() {
           <p className="mt-2 text-sm text-muted-foreground">Salve uma consulta de PostgreSQL ou SQL Server.</p>
         </div>
       </div>
-      <CommandForm />
+      <CommandForm importId={importId} />
     </div>
   );
 }
