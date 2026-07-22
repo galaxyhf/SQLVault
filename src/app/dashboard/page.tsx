@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Database, Plus, Rows3, Server } from "lucide-react";
+import { ListChecks, Plus, Repeat2, Rows3, Tags } from "lucide-react";
 import { getCommandStats, listLatestCommands } from "@/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
@@ -11,8 +11,9 @@ export default async function DashboardPage() {
 
   const cards = [
     { label: "Total de comandos", value: stats.total, icon: Rows3 },
-    { label: "Total PostgreSQL", value: stats.postgresql, icon: Database },
-    { label: "Total SQL Server", value: stats.sqlserver, icon: Server },
+    { label: "Conferência", value: stats.conferencia, icon: ListChecks },
+    { label: "Conversão", value: stats.conversao, icon: Repeat2 },
+    { label: "Geral", value: stats.geral, icon: Tags },
   ];
 
   return (
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
           return (

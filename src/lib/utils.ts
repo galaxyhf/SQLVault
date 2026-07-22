@@ -1,13 +1,15 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { DatabaseType } from "@/db/schema";
+import type { CommandTag } from "@/db/schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function databaseLabel(databaseType: DatabaseType) {
-  return databaseType === "postgresql" ? "PostgreSQL" : "SQL Server";
+export function tagLabel(tag: CommandTag) {
+  if (tag === "conferencia") return "Conferência";
+  if (tag === "conversao") return "Conversão";
+  return "Geral";
 }
 
 const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {

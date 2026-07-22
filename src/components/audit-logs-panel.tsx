@@ -7,8 +7,8 @@ import { unlockAuditLogsAction, type AuditAccessState, type AuditLogEntry } from
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { AuditAction, CommandAuditSnapshot } from "@/db/schema";
-import { cn, databaseLabel, formatDateTime } from "@/lib/utils";
+import type { AuditAction, StoredCommandAuditSnapshot } from "@/db/schema";
+import { cn, formatDateTime, tagLabel } from "@/lib/utils";
 
 const initialState: AuditAccessState = { ok: false };
 
@@ -39,17 +39,36 @@ const actionInfo: Record<
   },
 };
 
-const fieldLabels: Record<keyof CommandAuditSnapshot, string> = {
+const fieldLabels: Record<keyof StoredCommandAuditSnapshot, string> = {
   title: "Título",
   databaseType: "Banco",
+  tags: "Tags",
   sqlCode: "SQL",
 };
 
-function formatValue(field: keyof CommandAuditSnapshot, value: string) {
-  return field === "databaseType" ? databaseLabel(value as CommandAuditSnapshot["databaseType"]) : value;
+const fieldOrder: Array<keyof StoredCommandAuditSnapshot> = ["title", "tags", "databaseType", "sqlCode"];
+
+function formatValue(field: keyof StoredCommandAuditSnapshot, value: string | string[]) {
+  if (field === "databaseType") return value === "postgresql" ? "PostgreSQL" : "SQL Server";
+  if (field === "tags" && Array.isArray(value)) {
+    return value
+      .map((tag) =>
+        tag === "conferencia" || tag === "conversao" || tag === "geral" ? tagLabel(tag) : String(tag),
+      )
+      .join(", ");
+  }
+  return String(value);
 }
 
-function AuditValue({ field, value }: { field: keyof CommandAuditSnapshot; value: string }) {
+function AuditValue({
+  field,
+  value,
+}: {
+  field: keyof StoredCommandAuditSnapshot;
+  value: StoredCommandAuditSnapshot[keyof StoredCommandAuditSnapshot];
+}) {
+  if (value === undefined) return null;
+
   if (field === "sqlCode") {
     return (
       <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-xs leading-relaxed">
@@ -61,15 +80,17 @@ function AuditValue({ field, value }: { field: keyof CommandAuditSnapshot; value
   return <p className="text-sm">{formatValue(field, value)}</p>;
 }
 
-function SnapshotDetails({ snapshot }: { snapshot: CommandAuditSnapshot }) {
+function SnapshotDetails({ snapshot }: { snapshot: StoredCommandAuditSnapshot }) {
   return (
     <div className="space-y-4">
-      {(Object.keys(fieldLabels) as Array<keyof CommandAuditSnapshot>).map((field) => (
-        <div key={field} className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">{fieldLabels[field]}</p>
-          <AuditValue field={field} value={snapshot[field]} />
-        </div>
-      ))}
+      {fieldOrder.map((field) =>
+        snapshot[field] === undefined ? null : (
+          <div key={field} className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">{fieldLabels[field]}</p>
+            <AuditValue field={field} value={snapshot[field]} />
+          </div>
+        ),
+      )}
     </div>
   );
 }

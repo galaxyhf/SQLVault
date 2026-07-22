@@ -20,7 +20,7 @@ export default async function EditCommandPage({ params }: EditCommandPageProps) 
         <BackButton href={`/commands/${command.id}`} />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Editar comando</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Atualize o título, banco ou SQL.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Atualize o título, as tags ou o SQL.</p>
         </div>
       </div>
       <CommandForm command={command} />

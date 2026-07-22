@@ -17,7 +17,7 @@ export default async function CommandsPage({ searchParams }: CommandsPageProps) 
     <CommandsLibrary
       commands={result.commands}
       initialQuery={first(params.q)}
-      initialDatabaseType={first(params.type)}
+      initialTag={first(params.tag)}
       initialPage={Number(first(params.page) ?? 1) || 1}
     />
   );
