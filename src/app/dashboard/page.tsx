@@ -4,6 +4,7 @@ import { getCommandStats, listLatestCommands } from "@/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
 import { Button } from "@/components/ui/button";
+import { ImportCommandButton } from "@/components/import-command-button";
 
 export default async function DashboardPage() {
   const [stats, latestCommands] = await Promise.all([getCommandStats(), listLatestCommands(3)]);
@@ -21,12 +22,15 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="mt-2 text-sm text-muted-foreground">Resumo da biblioteca SQLVault.</p>
         </div>
-        <Button asChild>
-          <Link href="/commands/new">
-            <Plus className="size-4" />
-            Novo comando
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ImportCommandButton />
+          <Button asChild>
+            <Link href="/commands/new">
+              <Plus className="size-4" />
+              Novo comando
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
