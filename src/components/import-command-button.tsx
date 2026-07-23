@@ -47,7 +47,7 @@ export function ImportCommandButton() {
       <input
         ref={inputRef}
         type="file"
-        accept=".sql,.txt,.json,application/json,text/plain,application/sql"
+        accept=".sql,.txt,.json"
         onChange={handleFile}
         className="sr-only"
         aria-label="Selecionar arquivo de comando"
